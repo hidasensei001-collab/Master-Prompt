@@ -392,7 +392,7 @@
       <div class="wita-clock" id="clockWITA">WITA: --:--:--</div>
     </div>
 
-    <!-- SYNC STATUS (Firebase Database Aplikasi 1) -->
+    <!-- SYNC STATUS -->
     <div id="syncStatus" class="sync-status">🔄 Menghubungkan ke Cloud...</div>
 
     <!-- TAB NAVIGATION -->
@@ -500,14 +500,20 @@
   <div id="toast">✅ Copied!</div>
 
   <script>
-    // URL Firebase Asli Aplikasi 1
-    const FIREBASE_URL = "https://master-prompt-db-default-rtdb.firebaseio.com/"; 
+    // URL Firebase Realtime Database
+    const FIREBASE_URL = "https://masterprompt-b152f-default-rtdb.asia-southeast1.firebasedatabase.app"; 
     const DEFAULT_PASS = "maubuka";
 
-    // Kunci Storage & Data Asli Aplikasi 1
+    // Kunci Storage & Data
     let prompts = JSON.parse(localStorage.getItem('my_ai_prompts') || '[]');
     let stats = JSON.parse(localStorage.getItem('my_prompt_stats') || '{"opens":0,"totalCopies":0}');
     let editingId = null;
+
+    // Helper URL Firebase untuk cegah double slash
+    function getDbEndpoint() {
+      const baseUrl = FIREBASE_URL.replace(/\/$/, '');
+      return `${baseUrl}/prompts.json`;
+    }
 
     // Realtime Clock UTC+8 (WITA)
     function updateClock() {
@@ -539,7 +545,7 @@
       document.getElementById('passInput').value = '';
     }
 
-    // Sync Data Asli Aplikasi 1 (Ke Firebase Database /prompts.json)
+    // Sync Data (Ke Firebase Database /prompts.json)
     async function initSync() {
       const customBg = localStorage.getItem('prompt_mgr_bg');
       if (customBg) document.documentElement.style.setProperty('--bg-image', `url('${customBg}')`);
@@ -556,7 +562,7 @@
 
       try {
         statusEl.innerHTML = '<i class="fa-solid fa-rotate fa-spin"></i> Menyinkronkan data dengan Cloud...';
-        const res = await fetch(`${FIREBASE_URL}/prompts.json`);
+        const res = await fetch(getDbEndpoint());
         let cloudData = await res.json();
         
         if (!cloudData) cloudData = [];
@@ -591,7 +597,7 @@
       localStorage.setItem('my_ai_prompts', JSON.stringify(data));
       if (FIREBASE_URL && !FIREBASE_URL.includes("GANTI_DENGAN")) {
         try {
-          await fetch(`${FIREBASE_URL}/prompts.json`, {
+          await fetch(getDbEndpoint(), {
             method: 'PUT',
             body: JSON.stringify(data),
             headers: { 'Content-Type': 'application/json' }
